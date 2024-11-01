@@ -194,22 +194,16 @@
         </ol>
         </li>
     </p>
-    <p>
-        Para a realização da conexão com diversos clientes simultaneamente, foram utilizadas as chamadas goroutines, disponíveis nativamente na linguagem Go, que possibilitam a utilização de threads para execução de processos em paralelo. Com isso, é possível que mais de um cliente se conecte e comunique com o servidor simultaneamente e, graças às funcionalidades oferecidas pela tecnologia da linguagem, sem haver problemas de choques de comunicação ou problemas de concorrência. 
-    </p>
-    <p>
-        Dessa forma, se dois usuários tentarem comprar a mesma passagem simultaneamente, apenas um deles conseguirá realizar a compra, devido ao tratamento adequado de concorrência proporcionado pela linguagem.
-    </p>
 </div>
 
 <div id="concorrência">
     <h2>Concorrência Distribuída</h2>
     <div align="justify">
         <p>
-            Para o correto funcionamento da comunicação cliente-servidor, é essencial definir o formato dos dados que serão enviados e recebidos por ambos. Para isso, foram analisadas as estruturas disponíveis na linguagem, com o objetivo de transmitir apenas os dados necessários, minimizando o volume de envio para atender ao problema proposto. Optou-se por utilizar um map tanto na comunicação do servidor para o cliente quanto do cliente para o servidor, pois essa estrutura permite o envio de dados associados, como o nome das rotas, disponibilidade, e as requisições do usuário vinculadas ao seu ID.
+            Por utilizar do <em>framework</em> Gin, o sistema usufrui de funcionalidades tal como a de concorrência, que permite que múltiplas requisições sejam processadas simultaneamente, garantindo que o sistema possa lidar com diversos usuários conectados e requisições ao mesmo tempo. A concorrência é uma característica essencial para sistemas distribuídos, uma vez que a comunicação entre os componentes do sistema ocorre de forma assíncrona e não sequencial, permitindo que o servidor possa atender a múltiplas requisições de clientes simultaneamente.
         </p>
         <p>
-            Antes de qualquer envio, os dados são serializados e convertidos em um arquivo JSON, seguindo o formato de um <em>map</em> em Go. O destinatário, por sua vez, desserializa a mensagem para tratá-la adequadamente. Devido à utilização de uma estrutura de dados específica da linguagem, tanto o servidor quanto o cliente devem estar implementados em Go para garantir a compatibilidade na comunicação.
+            Entretanto, fora as funcionalidades do Gin, não há, neste projeto, qualquer outro método para o tratamento de concorrência distribuída para casos de acessos a funções críticas entre os servidores. O sistema foi projetado para que cada servidor possua uma cópia dos registros de clientes e passagens, e que cada servidor possa atualizar os registros dos outros servidores quando necessário.
         </p>
     </div>
 </div>
