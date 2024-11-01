@@ -27,3 +27,5 @@ services:
       - "8080:8080"
     depends_on:
       - etcd2
+    stdin_open: true
+    tty: true
