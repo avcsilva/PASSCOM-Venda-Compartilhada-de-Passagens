@@ -212,13 +212,10 @@
     <h2>Resultados</h2>
     <div align="justify">
         <p>
-            Tendo sido testado em laboratório com uso de diversos computadores para simular a conexão simultânea de múltiplos clientes, tal como com um <em>script</em> que realiza uma execução teste programada de múltiplos clientes ao mesmo tempo, foi possível averiguar que o sistema consegue lidar correta e eficientemente com as diversas comunicações ocorrendo simultaneamente, não apresentando nenhum tipo de atraso ou travamento, tal como se era esperado em teoria de acordo com as tecnologias oferecidas pela linguagem Go. Além disso, foi possível comprovar que o servidor foi capaz de reconhecer corretamente cada cliente que se conectou e reconectou, sendo possível a recuperação dos dados e compras de cada usuário simulado.
+            Tendo sido testado em laboratório com uso de diversos computadores para simular a conexão simultânea de múltiplos clientes, foi possível averiguar que o sistema consegue lidar correta e eficientemente com as diversas requisições ocorrendo simultaneamente, não apresentando nenhum tipo de atraso ou travamento. Além disso, foi possível comprovar que cada servidor foi capaz de reconhecer corretamente cada cliente a partir de seu nome de usuário, sendo possível a recuperação dos dados e compras de cada usuário em qualquer um dos servidores.
         </p>
         <p>
-            Em laboratório, foi testado também o que ocorria com o funcionamento do sistema caso um dos clientes conectados perdesse sua conexão de maneira forçada, como a remoção de um cabo de rede. Com isso, foi averiguado que o servidor mantém seu funcionamento normalmente, podendo ainda se comunicar com outros clientes, e encerrando automaticamente a comunicação com o cliente que perdeu sua conexão, graças à funcionalidade de <em>timeout</em> embutida na biblioteca utilizada para a realização das conexões e comunicações.
-        </p>
-        <p>
-            Entretanto, da maneira como projeto foi concebido, o cliente em questão que teve sua conexão perdida não consegue reconhecer o erro relatado em tempo real, mantendo a execução do programa na etapa em que parou, até que se tente enviar algum comando. Somente após a tentativa de enviar alguma mensagem o programa reconhece a perda da conexão e exibe uma mensagem de erro, solicitando em seguida um endereço alvo para realizar uma nova conexão. Caso o cliente receba de volta sua conexão com a rede, como tendo seu cabo de rede posto de volta, após o servidor ter encerrado sua conexão, esta não será iniciada novamente de forma automática. O usuário do cliente deverá indicar novamente o endereço alvo para poder se reconectar ao servidor e recuperar seus dados.
+            Da maneira como projeto foi concebido, um cliente que tenha sua conexão perdida não consegue reconhecer o erro relatado em tempo real, mantendo a execução do programa na etapa em que parou, até que se tente enviar alguma requisição. Somente após a tentativa de enviar algo, o programa reconhece a perda da conexão e exibe uma mensagem de erro, solicitando em seguida um endereço alvo para realizar uma nova conexão. Caso o cliente receba de volta sua conexão com a rede, como tendo seu cabo de rede posto de volta, após o servidor ter encerrado sua conexão, esta não será iniciada novamente de forma automática. O usuário do cliente deverá indicar novamente o endereço alvo para poder se reconectar ao servidor e recuperar seus dados.
         </p>
         <p>
             Uma considerável porção do código fonte do projeto possui documentação sobre suas operações, indicando o que cada parte ou linha de código deve estar realizando para o funcionamento do sistema.
@@ -244,7 +241,7 @@
     Com o terminal aberto, navegue até o diretório onde os arquivos foram baixados utilizando o comando <code>cd</code>, por exemplo,
     </p>
     <p> 
-    <code>cd C:\VENDEPASS_PBL_Concorrencia-e-Conectividade\Servidor</code>
+    <code>cd C:\PASSCOM-Venda-Compartilhada-de-Passagens\Server</code>
     </p>
     <h3>Sem docker</h3>
     <p>
@@ -259,9 +256,9 @@
     <p> 
     Para iniciar o servidor, insira o seguinte comando no terminal:
 
-    go run server.go
+    go run servidor.go
 
-O servidor estará funcionando e exibirá o IP e a porta da conexão. Após o servidor ser iniciado, não será possível interagir diretamente com ele, apenas visualizar suas saídas.
+Ao iniciar a execução, será exigida uma entrada, que será qual dos três servidores deseja iniciar. Após isso, o servidor estará funcionando e exibirá o log de debugs do Gin. Com isso, não será mais possível interagir diretamente com o servidor, apenas visualizar suas saídas.
 
 </p>
 <p align="center">
@@ -272,9 +269,9 @@ O servidor estará funcionando e exibirá o IP e a porta da conexão. Após o se
 <p>
 Para iniciar o cliente, insira o comando no terminal:
 
-    go run client.go
+    go run cliente.go
 
-Logo após, será solicitado que insira o endereço da conexão exatamente como foi informado pelo servidor, incluindo todos os pontos separadores.
+Ao iniciar a execução, será solicitado que insira o endereço da conexão, seguindo-se para as etapas de cadastro e uso normal do sistema, tal como explicitado nos tópicos anteriores.
 
 <p align="center">
 <img src="img/solicitacao de endereco.png" width = "400"/>
@@ -340,10 +337,10 @@ O menu do cliente será exibido, permitindo que o usuário interaja com o sistem
     <h2>Conclusão</h2>
     <div align="justify">
         <p>
-            De acordo com os resultados obtidos em testes em laboratório, é possível afirmar que o produto cumpre com o que se propõe inicialmente. Com a execução correta do servidor e do cliente, é possível realizar e cancelar compras de passagens mesmo que haja a presença de diversos usuários simultâneos, com o servidor encarregado de realizar todo o processamento e tratamento de concorrência para o caso de requisições coincidentes de múltiplos usuários.
+            De acordo com os resultados obtidos em testes em laboratório, é possível afirmar que o produto cumpre com o que se propõe inicialmente. Com a execução correta do servidor e do cliente, é possível realizar e cancelar compras de passagens mesmo que haja a presença de diversos usuários simultâneos, com o servidor encarregado de realizar todo o processamento, todos os servidores tendo seus registros atualizados após cada requisição e tratamento local de concorrência para o caso de requisições coincidentes de múltiplos usuários.
         </p>
         <p>
-            Ainda é possível aprimorar o sistema, como implementando uma reconexão automática para o cliente e servidor em caso de perda de rede. Porém, o projeto ainda consegue lidar adequadamente com suas outras propostas, sendo assim bem favorável para a sua utilização.
+            Ainda é possível aprimorar o sistema, como implementando uma metodologia para tratamento de concorrência distribuída para o sistema como um todo. Porém, o projeto ainda consegue lidar adequadamente com suas outras propostas, sendo assim bem favorável para a sua utilização.
         </p>
     </div>
 </div>
