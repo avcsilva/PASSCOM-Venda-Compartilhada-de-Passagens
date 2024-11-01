@@ -1,4 +1,4 @@
-<h1 align="center">VENDEPASS: Venda de Passagens</h1>
+<h1 align="center">PASSCOM: Venda Compartilhada de Passagens</h1>
 <h3 align="center">
     Este projeto foi desenvolvido como parte do segundo problema da disciplina MI - Concorrência e Conectividade do curso de graduação em Engenharia de Computação na UEFS
 </h3>
@@ -6,7 +6,7 @@
 <div id="sobre">
     <h2>Sobre o projeto</h2>
     <div align="justify">
-        O projeto desenvolvido consiste em um sistema de compra de passagens aéreas para diversas localidades, incluindo a opção de cancelamento das compras, funcionando sobre o modelo de sistemas distribuídos, tendo em sua formação a presença de 3 servidores. O sistema é composto por dois principais componentes: os clientes, responsáveis por solicitar a compra e obter informações sobre as passagens, e os servidores, que realizam o processamento e o armazenamento das passagens adquiridas em suas estruturas de dados, bem como a vinculação dessas passagens aos respectivos compradores. Tanto o cliente quanto os servidores foram desenvolvidos na linguagem de programação Go, recomendada por sua eficiência em projetos que envolvem comunicação em redes e tratamento adequado de concorrência. Para uma comunicação baseada em arquitetura REST com a linguagem Go, foi utilizado o framework Gin, que facilita a criação de rotas e a comunicação entre os componentes do sistema.
+        O projeto desenvolvido consiste em um sistema de compra de passagens aéreas para diversas localidades, incluindo a opção de cancelamento das compras, funcionando sobre o modelo de sistemas distribuídos, tendo em sua formação a presença de 3 servidores. O sistema é composto por dois principais componentes: os clientes, responsáveis por solicitar a compra e obter informações sobre as passagens, e os servidores, que realizam o processamento e o armazenamento das passagens adquiridas em suas estruturas de dados, bem como a vinculação dessas passagens aos respectivos compradores. Tanto o cliente quanto os servidores foram desenvolvidos na linguagem de programação Go, recomendada por sua eficiência em projetos que envolvem comunicação em redes e tratamento adequado de concorrência. Para uma comunicação baseada em arquitetura REST com a linguagem Go, foi utilizado o <em>framework</em> Gin, que facilita a criação de rotas e a comunicação entre os componentes do sistema.
     </div>
 </div>
 
@@ -53,20 +53,28 @@
         </p>
         <ol>  
             <li>
-                O servidor exibe no terminal um log de debugs, próprio do framework Gin utilizado, mostrando as requisições recebidas e respondidas, bem como os erros que possam ocorrer.
-            </li> 
+                O servidor exibe no terminal um log de debugs, próprio do <em>framework</em> Gin utilizado, mostrando as requisições recebidas e respondidas, bem como os erros que possam ocorrer.
+            </li>
+            <li>
+                Realizar cadastro e reidentificação de clientes, permitindo que os mesmos possam acessar suas compras em qualquer servidor.
+                <ol type="a">
+                    <li>
+                    Em caso de cadastro, o registro será encaminhado aos outros servidores, para que todos possuam as informações de todos os clientes.
+                    </li>
+                </ol>
+            </li>
             <li>
                 Listar os clientes já previamente conectados e cadastrados, tais como os registrar a partir de ID’s, que lhes são atribuídos no momento de suas conexões.
             </li>
             <li>
-                Enviar para o cliente uma listagem das localidades disponíveis para compra e oferecer que uma delas possa ser adquirida.
+                Concatenar as passagens de cada servidor em uma única estrutura de dados e enviar para o cliente a listagem de todas as localidades existentes, tal como suas disponibilidades para compra.
+            </li>
+            <li>
+                Realizar a compra de passagens para os clientes, verificando se a passagem está disponível e, em caso positivo, realizando a operação e retornando uma mensagem de confirmação, caso contrário, retornar uma mensagem de erro.
                 <ol type="a">
                     <li>
-                        Caso a passagem escolhida pelo cliente esteja disponível, esta logo lhe será atribuída a partir de seu ID.
+                        Caso a passagem seja comprada, o servidor deve atualizar a lista de passagens disponíveis, marcando a passagem como ocupada, tal como atualizar o registro dos clientes em cada outro servidor.
                     </li>
-                    <li>
-                        Caso o servidor verifique que a passagem selecionada já foi adquirida por outro cliente, será devolvida uma mensagem de alerta para o cliente envolvendo o ocorrido.
-                    </b>
                 </ol>
             </li>
             <li>
@@ -75,46 +83,35 @@
                     <li>
                         Caso o cliente não possua nenhuma aquisição, será devolvida uma mensagem indicando esse fato.
                     </li>
-                    <li>
-                        Caso possua, o cliente pode indicar uma de suas atuais passagens para o devido cancelamento. Com isso, essa passagem será removida da sua lista de aquisições e estará aberta para compra por parte de um novo cliente.
-                    </li>
                 </ol>
             </li>
             <li>
-                Encerrar a conexão de forma segura com um cliente.
+                Cancelar passagens para os clientes, verificando se a passagem existe e pertence ao cliente, e, em caso positivo, realizar a operação e retornar uma mensagem de confirmação, caso contrário, retornar uma mensagem de erro.
+                <ol type="a">
+                    <li>
+                        Caso a passagem seja cancelada, o servidor deve atualizar a lista de passagens disponíveis, marcando a passagem como livre, tal como atualizar o registro dos clientes em cada outro servidor.
+                    </li>
+                </ol>
             </li>
         </ol>
-        É utilizado o protocolo <em>stateful</em>, salvando as informações em variaveis no sistema do servidor, porém é importante frisar que tais informações armazenadas estarão disponíveis apenas enquanto o servidor estiver funcionando. No momento de seu desligamento, todos os registros serão retornados a seus valores padrões.
+        É utilizado o protocolo <em>stateful</em>, salvando as informações em variaveis no sistema dos servidores, porém é importante frisar que tais informações armazenadas estarão disponíveis apenas enquanto os servidores estiverem funcionando. No momento do desligamento de todos os servidores, todos os registros serão retornados a seus valores padrões.
         <h3>Cliente</h3>
         É a parte do sistema com o qual o usuário irá interagir para realizar suas solicitações, como comprar voos, ver voos comprados e até mesmo cancelá-los. É responsável por oferecer uma interface baseada em terminal para possibilitar que os usuários possam visualizar as informações e inserirem as ações que desejam realizar. Por meio dessa parte do sistema será possível:
         <ol>
             <li>
-                Indicar com qual endereço IP e porta se deseja conectar para interação.
+                Indicar com qual servidor se deseja conectar para interação, por meio de endereço IP e porta de conexão.
             </li>
             <li>
                 Solicitar a lista de localidades disponíveis.
-                <ol type="a">
-                    <li>
-                        Selecionar uma das localidades mostradas para aquisição.
-                    </li>
-                    <li>
-                        Retornar para o menu principal.
-                    </li>
-                </ol>
+            </li>
+            <li>
+                Comprar passagens para as localidades disponíveis.
             </li>
             <li>
                 Consultar a lista de passagens já adquiridas.
-                <ol type="a">
-                    <li>
-                        Selecionar uma das passagens para cancelamento.
-                    </li>
-                    <li>
-                        Retornar para o menu principal.
-                    </li>
-                </ol>
             </li>
             <li>
-                Encerrar a conexão de forma segura com o servidor.
+                Cancelar passagens já adquiridas.
             </li>
         </ol>
         O cliente utiliza o protocolo <em>stateless</em>, não possui nenhum armazenamento de dados e realiza processamento apenas para o envio e recebimento de mensagens, tal como processa a exibição da lista de passagens disponíveis, representando com cores quais estão liberadas para compra e quais estão atualmente ocupadas, respectivamente as cores verde e vermelho.
