@@ -12,8 +12,6 @@ services:
       - ETCD_ADVERTISE_CLIENT_URLS=http://172.16.103.13:2379
       - ETCD_INITIAL_CLUSTER=etcd1=http://172.16.103.14:2380,etcd2=http://172.16.103.13:2380,etcd3=http://172.16.103.2:2380
       - ETCD_INITIAL_CLUSTER_STATE=new
-    command: >
-      /bin/sh -c "etcd --listen-client-urls=http://0.0.0.0:2379"
     ports:
       - "2379:2379"
       - "2380:2380"
