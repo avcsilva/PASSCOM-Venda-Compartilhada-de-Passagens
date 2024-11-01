@@ -22,7 +22,7 @@
     <ul>
         <li><a href="#arquitetura">Arquitetura do sistema</a></li>
         <li><a href="#comunicacao">Protocolo de comunicação</a></li>
-        <li><a href="#formatação">Formatação e tratamento de dados</a></li>
+        <li><a href="#concorrência">Concorrência distribuída</a></li>
         <li><a href="#resultados">Resultados</a></li>
         <li><a href="#execucao">Execução do Projeto</a></li>
         <li><a href="#conclusao">Conclusão</a></li>
@@ -102,6 +102,8 @@
                 Indicar com qual servidor se deseja conectar para interação, por meio de endereço IP e porta de conexão.
             </li>
             <li>
+                Realizar o cadastro de um novo cliente ou retornar para o sistema, informando seu nome de usuário.
+            <li>
                 Solicitar a lista de localidades disponíveis.
             </li>
             <li>
@@ -122,96 +124,72 @@
     <h2>Protocolo de comunicação</h2>
     <div align="justify">
     <p>
-        Toda a comunicação do sistema foi projetada sobre o modelo TCP/IP, tratando-se de uma comunicação orientada a conexão, no qual deve haver a garantia de conexão estabelecida antes de qualquer comunicação, e que toda informação deve ser devidamente entregue e em sua ordem proposta. Além disso, como o servidor armazena informações de quais usuários já se conectaram e cadastraram, tal como quais deles já efetuaram compras de passagens, diz-se que é aplicado o paradigma de serviço stateful, caracterizado por um servidor  que mantém o estado das interações com clientes. Esse método garante que o usuário não perca seus dados, mesmo que o programa seja excluído ou desligado. 
+        Toda a comunicação do sistema foi projetada sobre o modelo RESTful, utilizando requisições HTTP entre servidores e clientes. Por ser uma comunicação baseada em HTTP, o sistema não exige uma conexão previamente estabelecida e é inerentemente stateless, ou seja, o estado da interação não é mantido entre as requisições. A cada solicitação, o cliente envia os dados necessários para a operação, e a resposta é processada com base na situação atual dos servidores. Essa abordagem elimina a dependência de sessões persistentes, oferecendo maior escalabilidade e resiliência, pois o sistema continua funcional mesmo que um dos servidores deixe de responder temporariamente.
     </p>
     <p>
-        O sistema desenvolvido tem como proposto o seguinte protocolo de comunicação, iniciando-se a partir do momento da conexão de um cliente com o servidor:
+        O sistema desenvolvido tem como proposto o seguinte protocolo de comunicação, iniciando-se a partir do momento em que o usuário insere seu nome de usuário para se conectar ao servidor:
     </p>
         <ol>
             <li>
-                O servidor inicia enviando ao cliente um número de ID, sendo este um número inteiramente novo ou o número já previamente cadastrado, caso seja um cliente em reconexão.
+                O cliente realiza uma requisição POST para a a rota "/cadastro" do servidor selecionado, enviando um JSON serializado contendo o nome de usuário inserido.
             </li>
             <li>
-                O cliente verifica se a primeira mensagem recebida na conexão é um número. Caso seja, é enviada uma resposta de confirmação de reconhecimento para o servidor ("ID_ok").
+                O servidor recebe a requisição, desserializa o JSON e verifica se o nome de usuário já está cadastrado. Caso não esteja, o servidor registra o novo cliente em si e nos outros servidores. Em seguida, tanto para o caso de já cadastrado quanto de não cadastrado, responde com um JSON contendo o ID do cliente, que será utilizado para identificar o usuário nas próximas requisições.
             </li>
             <li>
-                Com a resposta de confirmação ("ID_ok") sendo devidamente validada no lado do servidor, ambos poderão finalmente iniciar a interação com base em solicitações e comandos do usuário.
+                O cliente verifica a resposta do servidor, validando o ID recebido. Caso ocorra algum tipo de erro, a execução do cliente repete o processo de cadastro, exigindo nome de usuário e tentando novamente a requisição de cadastro. Caso contrário, o cliente exibe o menu principal, permitindo que o usuário realize as operações desejadas.
             </li>
         </ol>
     </p>
     <p>
-        Após a realização dessa comunicação inicial, tanto o servidor quanto o cliente estarão em sua etapa da realização de transações de informações sobre as passagens aéreas. A comunicação ocorrerá da seguinte forma, explicitando-se cada uma de suas possíveis etapas:
+        Após a realização dessa comunicação inicial, o cliente terá conhecimento de seu ID atribuído e os servidores já terão em seus registros a presença do novo cliente. A partir desse ponto, o cliente poderá realizar as operações de compra e consulta de passagens, seguindo o protocolo de comunicação a seguir, explicitando-se cada uma de sua possíveis ações:
         <ol>
             <li>
-                Todas as mensagens do cliente com destino ao servidor serão compostas pelo seu ID atribuído e o comando que se deseja realizar no momento. Tendo como um exemplo de uma mensagem “1:1” no momento de um usuário na tela de menu principal, significando que o cliente com ID 1 deseja visualizar a lista de passagens para possivelmente realizar uma compra. Caso o servidor verifique que foi recebida uma mensagem num formato diferente desse, a conexão é encerrada automaticamente.
-            </li>
-            <li>
-                Caso seja solicitada uma operação de compra:
+                O cliente envia uma requisição GET para a rota "/rotas" do servidor, solicitando a lista de todas as localidades disponíveis, tal como suas disponibilidades
                 <ol type="a">
                     <li>
-                        O servidor inicia a etapa enviando, em formato JSON, um <em>map</em> para o cliente com de todos os possíveis destinos e se estes estão ocupados ou disponíveis.
-                    </li>
-                    <li>
-                        Tendo o cliente recebido a lista, é esperado que responda com um comando de retorno ou com o nome de um dos destinos para compra.
+                        O servidor que recebeu a requisição realiza a mesma requisição para os outros servidores (porém com a adição de um cabeçalho "X-Source" contendo o termo "servidor"), montando uma estrutura de dados que concatene todas as passagens presentes nos registros de cada um dos servidores. Em seguida, responde ao cliente com um JSON contendo a lista de todas as localidades reunidas e suas disponibilidades.
                         <ol type="i">
                             <li>
-                                Caso o servidor receba um comando de retorno (por exemplo “1:3”), este retornará para a etapa de menu principal, tal qual fará o cliente.
-                            </li>
-                            <li>
-                                Caso o servidor receba uma informação diferente do comando de retorno, como um possível destino (exemplo: “1:Fortaleza”), este verificará se é possível realizar a operação.
-                            </li>
-                            <ol>
-                                <li>
-                                    Caso o destino recebido não exista ou já esteja ocupado, será enviada ao cliente uma mensagem de erro ("Rota inválida!") e ambos cliente e servidor retornarão à etapa de menu principal.
-                                </li>
-                                <li>
-                                    Caso o destino exista e esteja passível de compra, o servidor realizará a operação de compra e responderá ao cliente com uma mensagem de confirmação ("ok"), que por sua vez será validada de forma a informar ao usuário que a operação foi bem sucedida. Após isso, tanto o cliente quanto o servidor retornarão à etapa de menu principal.
-                                </li>
-                            </ol>
-                        </ol>
-                    </li>
-                </ol>
-            </li>
-            <li>
-                Caso seja solicitada uma operação de consulta:
-                <ol type="a">
-                    <li>
-                        O servidor inicia verificando se o referido cliente possui já registrada alguma compra. Caso não haja compras, será respondido ao cliente com uma mensagem que indique o ocorrido ("Sem passagens compradas"). Entretanto, caso o cliente possua passagens registradas, o servidor enviará uma mensagem de confirmação de posse ("ok").
-                    </li>
-                    <li>
-                        Tendo o cliente recebido a mensagem de confirmação, este estará esperando, por parte do servidor, novamente em JSON, uma lista de passagens registradas para o ID do referido cliente. Com a lista de passagens recebida, desserializada e devidamente tratada para exibição em terminal, é esperado que o cliente responda com um comando de retorno ou com o nome de uma das possíveis passagens.
-                        <ol type="i">
-                            <li>
-                                Caso o servidor receba comando de retorno (exemplo: "1:3"), ambas as partes do sistema retornarão para a etapa de menu principal.
-                            </li>
-                            <li>
-                                Caso o servidor receba uma informação diferente do comando de retorno (exemplo: "1:Maceio"), este verificará se foi possível realizar a operação de cancelamento de passagem com o nome recebido.
-                                <ol>
-                                    <li>
-                                        Caso o nome recebido não exista na lista ou pertença a algum outro cliente, será enviada ao cliente uma mensagem indicando o erro ("Rota inválida!"), e ambos retornarão à etapa de menu principal.
-                                    </li>
-                                    <li>
-                                        Caso o nome exista e pertença ao cliente em questão, a operação será realizada e o servidor responderá com uma mensagem de confirmação ("ok"). Após isso, ambos irão retornar à etapa de menu principal.
-                                    </li>
-                                </ol>
+                                Os servidores que recebem a requisição com o cabeçalho "X-Source" não realizam a requisição para os outros servidores, apenas respondem com a lista de localidades e disponibilidades que possuem em seus registros.
                             </li>
                         </ol>
                     </li>
                 </ol>
             </li>
             <li>
-                Caso seja solicitado o encerramento da conexão:
+                O cliente envia uma requisição GET para a rota "/rotas_cliente", incluindo um parâmetro de <em>query</em> com o ID do cliente, solicitando a lista de todas as passagens adquiridas pelo cliente
                 <ol type="a">
                     <li>
-                        O servidor inicia enviando uma mensagem de confirmação para encerramento de conexão ("exit_ok") e, em seu lado, encerra a conexão.
-                    </li>
-                    <li>
-                        O cliente, por sua vez, tendo recebido e validado corretamente a mensagem de confirmação, exibirá em sua interface tal confirmação e encerrará a execução do programa. Caso, por algum motivo, receba uma mensagem diferente da confirmação, exibirá em sua interface uma mensagem de erro e continuará com a execução do serviço, retornando à etapa de menu principal.
+                        O servidor valida a mensagem recebida e, caso o ID do cliente seja válido, responde com um JSON contendo a lista de todas as passagens adquiridas pelo cliente. Porém, em caso de algum problema (como um ID inválido ou a não presença de passagens atribuídas àquele cliente), o servidor responderá com uma mensagem de erro indicando o ocorrido.
                     </li>
                 </ol>
             </li>
             <li>
-                Em caso de um comando inválido (exemplo: "1:5", "1:6", etc) o servidor enviará uma mensagem informando o problema ("Operação inválida!"), de forma que o cliente a receba e exiba em seu terminal para indicar ao usuário o ocorrido.
+                O cliente envia uma requisição PATCH para a rota "/comprar_rota" do servidor, enviando um JSON serializado contendo o ID do cliente e o nome da localidade que deseja comprar
+                <ol type="a">
+                    <li>
+                        O servidor que recebe a requisição valida o JSON recebido e verifica se a localidade desejada está disponível para compra (reunindo todas as passagens e disponibilidades de todos os servidores, tal como ocorre na requisição GET para "/rotas"). Caso esteja, realiza a operação de compra atualizando os registros de passagens e clientes em sua memória e na dos outros servidores (também utilizando a rota "/comprar_rota") e responde com um JSON contendo uma mensagem de confirmação. Caso contrário, responde com uma mensagem de erro indicando o ocorrido.
+                        <ol type="i">
+                            <li>
+                                No início da validação da requisição, é analisado se há um cabeçalho "X-Source" na requisição, indicando que a requisição foi feita por um servidor. Caso haja, o servidor que recebeu a requisição não realiza a requisição para os outros servidores, apenas responde com a confirmação ou erro da operação.
+                            </li>
+                        </ol>
+                    </li>
+                </ol>
+            </li>
+            <li>
+                O cliente envia uma requisição PATCH para a rota "/cancelar_rota" do servidor, enviando um JSON serializado contendo o ID do cliente e o nome da localidade que deseja cancelar a compra
+                <ol type="a">
+                    <li>
+                        O servidor que recebe a requisição valida o JSON recebido e verifica se a localidade desejada está atribuída ao cliente. Caso esteja, realiza a operação de cancelamento atualizando os registros de passagens e clientes em sua memória e na dos outros servidores (também utilizando a rota "/cancelar_rota") e responde com um JSON contendo uma mensagem de confirmação. Caso contrário, responde com uma mensagem de erro indicando o ocorrido.
+                        <ol type="i">
+                            <li>
+                                No início da validação da requisição, é analisado se há um cabeçalho "X-Source" na requisição, indicando que a requisição foi feita por um servidor. Caso haja, o servidor que recebeu a requisição não realiza a requisição para os outros servidores, apenas responde com a confirmação ou erro da operação.
+                            </li>
+                        </ol>
+                    </li>
+                </ol>
             </li>
         </ol>
         </li>
@@ -224,8 +202,8 @@
     </p>
 </div>
 
-<div id="formatação">
-    <h2>Formatação e tratamento de dados</h2>
+<div id="concorrência">
+    <h2>Concorrência Distribuída</h2>
     <div align="justify">
         <p>
             Para o correto funcionamento da comunicação cliente-servidor, é essencial definir o formato dos dados que serão enviados e recebidos por ambos. Para isso, foram analisadas as estruturas disponíveis na linguagem, com o objetivo de transmitir apenas os dados necessários, minimizando o volume de envio para atender ao problema proposto. Optou-se por utilizar um map tanto na comunicação do servidor para o cliente quanto do cliente para o servidor, pois essa estrutura permite o envio de dados associados, como o nome das rotas, disponibilidade, e as requisições do usuário vinculadas ao seu ID.
