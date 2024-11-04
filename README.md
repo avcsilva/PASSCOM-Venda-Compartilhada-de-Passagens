@@ -36,7 +36,7 @@
             O sistema utiliza uma arquitetura distribuída RESTful baseada em três servidores independentes, cada um representando uma companhia aérea diferente, possuindo seus próprios conjuntos de passagens. A arquitetura garante a disponibilidade e tolerância a falhas, uma vez que a operação do sistema é mantida mesmo com a falha de um dos servidores.
         </p>
         <p>
-            Todos os dados recorrentes de processamento das passagens são atribuídos aos servidores, assim, as informações referentes aos clientes permanecerão salvas e seguras quando o mesmo se desconectar e desejar retornar mais futuramente.
+            Todos os dados recorrentes de processamento das passagens são atribuídos aos servidores, assim, as informações referentes aos clientes permanecerão salvas e seguras quando o mesmo se desconectar e desejar retornar futuramente.
         </p>
         <h3>Servidor</h3>
         <p>
@@ -73,7 +73,7 @@
                 Realizar a compra de passagens para os clientes, verificando se a passagem está disponível e, em caso positivo, realizando a operação e retornando uma mensagem de confirmação, caso contrário, retornar uma mensagem de erro.
                 <ol type="a">
                     <li>
-                        Caso a passagem seja comprada, o servidor deve atualizar a lista de passagens disponíveis, marcando a passagem como ocupada, tal como atualizar o registro dos clientes em cada outro servidor.
+                        Caso a passagem seja comprada, o servidor deve atualizar a lista de passagens disponíveis, marcando a passagem como ocupada, tal como atualizar o registro dos clientes em cada servidor.
                     </li>
                 </ol>
             </li>
@@ -89,7 +89,7 @@
                 Cancelar passagens para os clientes, verificando se a passagem existe e pertence ao cliente, e, em caso positivo, realizar a operação e retornar uma mensagem de confirmação, caso contrário, retornar uma mensagem de erro.
                 <ol type="a">
                     <li>
-                        Caso a passagem seja cancelada, o servidor deve atualizar a lista de passagens disponíveis, marcando a passagem como livre, tal como atualizar o registro dos clientes em cada outro servidor.
+                        Caso a passagem seja cancelada, o servidor deve atualizar a lista de passagens disponíveis, marcando a passagem como livre, tal como atualizar o registro dos clientes em cada servidor.
                     </li>
                 </ol>
             </li>
@@ -102,7 +102,7 @@
                 Indicar com qual servidor se deseja conectar para interação, por meio de endereço IP e porta de conexão.
             </li>
             <li>
-                Realizar o cadastro de um novo cliente ou retornar para o sistema, informando seu nome de usuário.
+                Realizar o cadastro de um novo cliente ou reconectar ao sistema, informando seu nome de usuário.
             <li>
                 Solicitar a lista de localidades disponíveis.
             </li>
@@ -131,7 +131,7 @@
     </p>
         <ol>
             <li>
-                O cliente realiza uma requisição POST para a a rota "/cadastro" do servidor selecionado, enviando um JSON serializado contendo o nome de usuário inserido.
+                O cliente realiza uma requisição POST para a rota "/cadastro" do servidor selecionado, enviando um JSON serializado contendo o nome de usuário inserido.
             </li>
             <li>
                 O servidor recebe a requisição, desserializa o JSON e verifica se o nome de usuário já está cadastrado. Caso não esteja, o servidor registra o novo cliente em si e nos outros servidores. Em seguida, tanto para o caso de já cadastrado quanto de não cadastrado, responde com um JSON contendo o ID do cliente, que será utilizado para identificar o usuário nas próximas requisições.
@@ -212,7 +212,7 @@
     <h2>Resultados</h2>
     <div align="justify">
         <p>
-            Tendo sido testado em laboratório com uso de diversos computadores para simular a conexão simultânea de múltiplos clientes, foi possível averiguar que o sistema consegue lidar correta e eficientemente com as diversas requisições ocorrendo simultaneamente, não apresentando nenhum tipo de atraso ou travamento. Além disso, foi possível comprovar que cada servidor foi capaz de reconhecer corretamente cada cliente a partir de seu nome de usuário, sendo possível a recuperação dos dados e compras de cada usuário em qualquer um dos servidores.
+            Tendo sido testado em laboratório com uso de diversos computadores para simular a conexão simultânea de múltiplos clientes, foi possível averiguar que o sistema consegue lidar corretamente e de forma eficiente com as diversas requisições ocorrendo simultaneamente, não apresentando nenhum tipo de atraso ou travamento. Além disso, foi possível comprovar que cada servidor foi capaz de reconhecer corretamente cada cliente a partir de seu nome de usuário, sendo possível a recuperação dos dados e compras de cada usuário em qualquer um dos servidores.
         </p>
         <p>
             Da maneira como projeto foi concebido, um cliente que tenha sua conexão perdida não consegue reconhecer o erro relatado em tempo real, mantendo a execução do programa na etapa em que parou, até que se tente enviar alguma requisição. Somente após a tentativa de enviar algo, o programa reconhece a perda da conexão e exibe uma mensagem de erro, solicitando em seguida um endereço alvo para realizar uma nova conexão. Caso o cliente receba de volta sua conexão com a rede, como tendo seu cabo de rede posto de volta, após o servidor ter encerrado sua conexão, esta não será iniciada novamente de forma automática. O usuário do cliente deverá indicar novamente o endereço alvo para poder se reconectar ao servidor e recuperar seus dados.
@@ -251,39 +251,23 @@
         Deve ser aberto um terminal para cada código, e cada um possui um diretório diferente.
     </p>
     <p>
-        O primeiro arquivo a ser executado deve ser o servidor. Embora o cliente possa ser iniciado primeiro, o servidor é quem comunica o endereço da conexão.
+        O primeiro arquivo a ser executado deve ser o servidor. Embora o cliente possa ser iniciado primeiro, o servidor é quem informa o endereço da conexão.
     </p>
     <p> 
     Para iniciar o servidor, insira o seguinte comando no terminal:
 
-    go run servidor.go
-
+<code>go run servidor.go</code>
 Ao iniciar a execução, será exigida uma entrada, que será qual dos três servidores deseja iniciar. Após isso, o servidor estará funcionando e exibirá o log de debugs do Gin. Com isso, não será mais possível interagir diretamente com o servidor, apenas visualizar suas saídas.
 
 </p>
-<p align="center">
-<img src="img/Tela inicial do servidor.jpeg" width = "400" />
-</p>
-<p align="center"><strong>Tela inicial do servidor</strong></p>
 <h3>Cliente</h3>
 <p>
 Para iniciar o cliente, insira o comando no terminal:
 
-    go run cliente.go
-
+<code>go run cliente.go</code>
 Ao iniciar a execução, será solicitado que insira o endereço da conexão, seguindo-se para as etapas de cadastro e uso normal do sistema, tal como explicitado nos tópicos anteriores.
 
-<p align="center">
-<img src="img/solicitacao de endereco.png" width = "400"/>
-</p>
-<p align="center"><strong>Tela de solicitação para se conectar ao servidor</strong></p>
-
 O menu do cliente será exibido, permitindo que o usuário interaja com o sistema utilizando os números do teclado para selecionar as opções desejadas.
-
-<p align="center">
-<img src="img/menu do usuario.png" width = "400"/>
-</p>
-<p align="center"><strong>Menu do usuário</strong></p>
 
 </p>
     <h3>Com Docker</h3>
@@ -296,24 +280,21 @@ O menu do cliente será exibido, permitindo que o usuário interaja com o sistem
 
 Utilize o comando para gerar a imagem:
 
-    docker build -t server .
-
+<code>docker build -t server .</code>
 Para executar a imagem, roda a aplicação em container, utilize:
 
-    docker run -it -p 8088:8088 server
-
+<code>docker run -it -p 8088:8088 server</code>
 O código será executado e exibirá o endereço e porta, similar ao funcionamento sem docker, e os mesmo procedimentos deverão ser seguido
 
 </p>
     <h3>Cliente</h3>
     <p>
         Para iniciar o cliente, crie a imagem utilizando o comando a seguir:
-        
-    docker build -t client .
-Para executar a imagem: 
-    
-    docker run -it --rm client
 
+<code>docker build -t client .</code>
+Para executar a imagem:
+
+<code>docker run -it --rm client</code>
 Logo após, será solicitado que você insira o endereço da conexão exatamente como foi informado pelo servidor, incluindo todos os pontos separadores.
 
 O menu do cliente será exibido, permitindo que o usuário interaja com o sistema utilizando os números do teclado para selecionar as opções desejadas.
@@ -322,14 +303,6 @@ O menu do cliente será exibido, permitindo que o usuário interaja com o sistem
     <h3>Comprar/Cancelar Compra</h3>
     <p>
         Na tela que apresenta os nomes das cidades disponíveis para compra ou cancelamento de passagens, é importante que o nome da cidade seja digitado exatamente como está exibido, respeitando letras maiusculas e/ou minúsculas e eventuais assentos.
-        <p align="center">
-    <img src="img/comprar passagem.png" width = "400"/>
-    </p>
-    <p align="center"><strong>Comprando passagem</strong></p>
-    <p align="center">
-    <img src="img/cancelando compra.png" width = "400"/>
-    </p>
-    <p align="center"><strong>Cancelando compra de passagem</strong></p>
     </p>
 </div>
 
