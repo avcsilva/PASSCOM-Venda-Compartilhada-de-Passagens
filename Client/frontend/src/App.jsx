@@ -1,55 +1,90 @@
-import { Box } from '@mui/material';
-import { CardList, NavBar } from './components';
+import { Box, Dialog } from '@mui/material';
+import { NavBar, CadastroLogin, CardList } from './components';
 import { AppThemeProvider } from './contexts/ThemeContext';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { getRotas } from './func/userServices/UserServices';
 
 function App() {
-  // Lista de destinos disponíveis para compra
-  const items = [
-    { id: '1', title: 'Xique-Xique BA' },
-    { id: '2', title: 'São Paulo' },
-    { id: '3', title: 'Aracaju' },
-    { id: '4', title: 'Feira de Santana' },
-  ];
+  const [items, setItems] = useState([]);
+  const [tickets, setTickets] = useState([]);
+  const [endpoint, setEndpoint] = useState('');
+  const [clientId, setClientId] = useState(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [credentials, setCredentials] = useState({ name: '', password: '' });
+  
+  // Usamos um ref para armazenar o último estado de rotas, evitando re-renderizações desnecessárias
+  const lastRotasRef = useRef([]);
 
-  // Lista de tickets comprados simulados
-  const [tickets, setTickets] = useState([
-    { id: '5', title: 'Natal' },
-    { id: '6', title: 'Maceió' },
-    { id: '7', title: 'Fortaleza' },
-  ]);
-
-  // Função para lidar com o cancelamento de um ticket
   const handleCancel = (id) => {
-    console.log(`Você cancelou o item com id: ${id}`);
-    
+    setTickets((prevTickets) => prevTickets.filter(ticket => ticket.id !== id));
   };
 
-  // Função para lidar com a compra de um item
   const handleBuy = (id) => {
     const item = items.find((item) => item.id === id);
     if (item) {
-      setTickets((prevTickets) => [...prevTickets, item]);
+      // Não adiciona a compra ao estado tickets
+      console.log(`Você comprou o item com id: ${id}`);
     }
   };
 
-  // Estado para controle de abertura do menu lateral
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const handleLogin = (name, password) => {
+    setCredentials({ name, password });
+  };
+
+  const handleCloseLoginModal = () => {
+    setCredentials({ name: '', password: '' });
+  };
+
+  const showLoginModal = credentials.name === '' && credentials.password === '';
+
+  const fetchRotas = async () => {
+    if (!endpoint) return;
+    try {
+      const response = await getRotas(endpoint);
+      const filteredItems = Object.entries(response.rotas)
+        .filter(([key, value]) => value === 0)
+        .map(([key]) => ({ id: key, title: key }));
+
+      // Só atualiza o estado se as rotas forem diferentes das anteriores
+      if (JSON.stringify(filteredItems) !== JSON.stringify(lastRotasRef.current)) {
+        setItems(filteredItems);
+        lastRotasRef.current = filteredItems; // Atualiza o cache de referência
+      }
+    } catch (error) {
+      console.error('Erro ao buscar rotas:', error);
+    }
+  };
+
+  useEffect(() => {
+    const intervalId = setInterval(fetchRotas, 5000); // Consulta o servidor a cada 5 segundos
+
+    return () => clearInterval(intervalId); // Limpa o intervalo ao desmontar o componente
+  }, [endpoint]);
 
   return (
     <> 
       <AppThemeProvider>
-        <NavBar 
-          tickets={tickets} // Passando a lista de tickets
-          handleCancel={handleCancel} // Passando a função de cancelamento
-          onToggleMenu={() => setIsMenuOpen(!isMenuOpen)} 
-          open={isMenuOpen} 
-          onClose={() => setIsMenuOpen(false)} 
-        />
-        <Box marginTop={2} marginLeft={1}>
-          <CardList 
-            items={items} 
-            onBuy={handleBuy} />
+        <Box sx={{ height: '100vh', width: '100vw', overflowY: 'auto', overflowX: 'hidden' }}>
+          <NavBar
+            tickets={tickets}
+            handleCancel={handleCancel}
+            onToggleMenu={() => setIsMenuOpen(!isMenuOpen)}
+            open={isMenuOpen}
+            onClose={() => setIsMenuOpen(false)}
+            credentials={credentials}
+            setEndpoint={setEndpoint}
+            setClientId={setClientId}
+            clientId={clientId}
+            endpoint={endpoint}
+            setTickets={setTickets}
+          />
+          <Box marginTop={2} marginLeft={1}>
+            <CardList items={items} onBuy={handleBuy} endpoint={endpoint} clientId={clientId} />
+          </Box>
+          
+          <Dialog open={showLoginModal} onClose={handleCloseLoginModal} fullWidth>
+            <CadastroLogin open={showLoginModal} onClose={handleCloseLoginModal} onLogin={handleLogin} />
+          </Dialog>
         </Box>
       </AppThemeProvider>
     </>

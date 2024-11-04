@@ -1,32 +1,76 @@
 import { useState, useRef } from 'react';
-import { Box, IconButton, InputBase, Paper, useTheme, ClickAwayListener } from '@mui/material';
+import { Box, IconButton, InputBase, Paper, useTheme, ClickAwayListener, Typography, Snackbar } from '@mui/material';
 import Divider from '@mui/material/Divider';
 import SearchIcon from '@mui/icons-material/Search';
 import AirplaneTicketIcon from '@mui/icons-material/AirplaneTicket';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
-import logo from '/image/aviao-de-papel.png';
+import logo from '/image/icon/aviao-de-papel.png';
 import { useAppThemeContext } from '../../contexts/ThemeContext';
-import { SideMenu } from '../SideMenu/SideMenu'; // Importe seu SideMenu aqui
+import { SideMenu } from '../SideMenu/SideMenu';
 import PropTypes from 'prop-types';
+import axios from 'axios';
+import { getRotasCliente } from '../../func/userServices/UserServices'; // Importa a função getRotasCliente
 
-export const NavBar = ({ tickets, handleCancel }) => {
+export const NavBar = ({ tickets, handleCancel, credentials, setEndpoint, setClientId, clientId, endpoint, setTickets }) => {
     const theme = useTheme();
     const { toggleTheme } = useAppThemeContext();
-    
-    // Estado para controlar a abertura do menu lateral
+
     const [menuOpen, setMenuOpen] = useState(false);
-    
-    // Referência para o menu lateral
+    const [searchUrl, setSearchUrl] = useState('');
+    const [connectionStatus, setConnectionStatus] = useState('Informe a URL do servidor');
+    const [errorAlert, setErrorAlert] = useState(false); // Estado para o alerta de erro
+
     const menuRef = useRef(null);
 
-    // Função para alternar a visibilidade do menu
-    const handleMenuToggle = () => {
+    const handleMenuToggle = async () => {
         setMenuOpen((prev) => !prev);
+        if (!menuOpen && clientId && endpoint) {
+            try {
+                const rotasCliente = await getRotasCliente(endpoint, clientId);
+                if (Array.isArray(rotasCliente)) {
+                    setTickets(rotasCliente.map((rota, index) => ({ id: index.toString(), title: rota })));
+                } else {
+                    console.error('A resposta do servidor não é um array:', rotasCliente);
+                    setErrorAlert(true);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar rotas do cliente:', error);
+                setErrorAlert(true);
+            }
+        }
     };
 
-    // Função para fechar o menu
     const handleMenuClose = () => {
         setMenuOpen(false);
+    };
+
+    const handleSearch = async () => {
+        if (searchUrl) {
+            setSearchUrl(''); // Limpa o campo de entrada imediatamente
+            try {
+                const nomeCompleto = `${credentials.name}${credentials.password}`;
+                const response = await axios.post(`${searchUrl}/cadastro`, { Nome: nomeCompleto }, {
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                if (response.data && response.data.id) {
+                    console.log(`Cadastro realizado com ID: ${response.data.id}`);
+                    setEndpoint(searchUrl);
+                    setClientId(response.data.id); // Armazena o ID do cliente
+                    setConnectionStatus(`Conectado no ${searchUrl}`);
+                } else {
+                    console.error('Erro no cadastro.');
+                    setConnectionStatus('Não foi possível se conectar ao servidor');
+                    setErrorAlert(true); // Exibe alerta de erro
+                }
+            } catch (error) {
+                console.error('Erro ao fazer a requisição de cadastro:', error);
+                setConnectionStatus('Não foi possível se conectar ao servidor');
+                setErrorAlert(true); // Exibe alerta de erro
+            }
+        } else {
+            console.warn('URL de busca não pode estar vazia.');
+            setConnectionStatus('URL de busca não pode estar vazia');
+        }
     };
 
     return (
@@ -40,40 +84,39 @@ export const NavBar = ({ tickets, handleCancel }) => {
                 alignItems='center'
                 component={Paper}
                 justifyContent="space-between"
-                ref={menuRef} // Ref para o menu
+                ref={menuRef}
             >
                 {/* Logo */}
-                <Box
-                    display='flex'
-                    alignItems='center'
-                    gap={1}
-                >
+                <Box display='flex' alignItems='center' gap={1}>
                     <img src={logo} alt="Logo Passcom" width="35" height="35" />
                     <span style={{ fontFamily: 'Roboto, sans-serif', fontSize: '2rem', fontWeight: 700 }}>PASSCOM</span>
                 </Box>
 
-                {/* Barra de pesquisa centralizada e responsiva */}
+                {/* Barra de pesquisa */}
                 <Paper
                     component="form"
                     sx={{
                         p: theme.spacing(1),
                         display: 'flex',
                         alignItems: 'center',
-                        width: { xs: '100%', sm: theme.spacing(50) }, // Responsivo
-                        maxWidth: theme.spacing(60), // Limite máximo
+                        width: { xs: '100%', sm: theme.spacing(50) },
+                        maxWidth: theme.spacing(60),
                         height: theme.spacing(2),
                         borderRadius: theme.spacing(5),
                         flexGrow: 1,
-                        mx: { xs: 2, sm: 4 }, // Margem horizontal para centralizar em telas pequenas
+                        mx: { xs: 2, sm: 4 },
                     }}
                 >
                     <InputBase
                         sx={{ ml: theme.spacing(1), flex: 1 }}
-                        placeholder="Buscar Rotas de Voos"
+                        placeholder={connectionStatus}
                         inputProps={{ 'aria-label': 'buscar rotas de voos' }}
+                        value={searchUrl}
+                        onChange={(e) => setSearchUrl(e.target.value)}
                     />
                     <IconButton
                         type="button"
+                        onClick={handleSearch}
                         sx={{
                             p: theme.spacing(1),
                             color: 'primary',
@@ -87,15 +130,11 @@ export const NavBar = ({ tickets, handleCancel }) => {
                     <Divider sx={{ height: theme.spacing(4), m: theme.spacing(0.5) }} orientation="vertical" />
                 </Paper>
 
-                {/* Minhas compras / Tema */}
-                <Box
-                    display="flex"
-                    gap={1}
-                    alignItems="center"
-                >
+                {/* Ícones de Minhas compras / Tema */}
+                <Box display="flex" gap={1} alignItems="center">
                     <IconButton
                         aria-label="Minha Passagens"
-                        onClick={handleMenuToggle} // Adicionado manipulador de clique
+                        onClick={handleMenuToggle}
                         sx={{
                             display: 'flex',
                             flexDirection: 'column',
@@ -132,8 +171,16 @@ export const NavBar = ({ tickets, handleCancel }) => {
                 <SideMenu 
                     open={menuOpen} 
                     onClose={handleMenuClose} 
-                    purchasedItems={tickets} // Passe a lista de itens comprados aqui
-                    onCancel={handleCancel} // Passa a função de cancelamento
+                    purchasedItems={tickets} 
+                    onCancel={handleCancel} 
+                />
+
+                {/* Alerta de erro */}
+                <Snackbar
+                    open={errorAlert}
+                    autoHideDuration={4000}
+                    onClose={() => setErrorAlert(false)}
+                    message="Não foi possível se conectar ao servidor"
                 />
             </Box>
         </ClickAwayListener>
@@ -145,8 +192,17 @@ NavBar.propTypes = {
     tickets: PropTypes.arrayOf(
         PropTypes.shape({
             title: PropTypes.string.isRequired,
-            id: PropTypes.string.isRequired,
+            id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
         })
     ).isRequired,
     handleCancel: PropTypes.func.isRequired,
+    credentials: PropTypes.shape({
+        name: PropTypes.string.isRequired,
+        password: PropTypes.string.isRequired,
+    }).isRequired,
+    setEndpoint: PropTypes.func.isRequired,
+    setClientId: PropTypes.func.isRequired,
+    clientId: PropTypes.number,
+    endpoint: PropTypes.string,
+    setTickets: PropTypes.func.isRequired,
 };
